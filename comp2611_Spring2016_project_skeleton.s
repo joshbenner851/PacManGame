@@ -1,3 +1,5 @@
+#Josh Benner, 20362519 jebenner@ust.hk
+
 .data
 
 quiz_time:	.word 0 # the remaining time (number of game iterations) of the Quiz mode
@@ -76,7 +78,11 @@ main:		jal input_game_params
 		sw $v0, 0($t0)		
 		la $t0, teacher_num # number of teacher objects input by user
 		sw $v1, 0($t0)		
+		
+		#you can push onto the stack from a temp reg address?
+		#weird but I guess it makes sense
 						
+														
 		li $v0, 200 # Create the Game Screen
 		syscall
 		li $a0, 0 # play the background sound repeatedly (in loop)
@@ -249,7 +255,8 @@ input_game_params:
 #    their locations are random on the paths of the game maze.
 #--------------------------------------------------------------------
 init_game_level:
-	addi $sp, $sp, -12
+	addi $sp, $sp, -12 #allocate room on stack for 3 items
+	#store the return address and whatever s0 and s1 are
 	sw $ra, 8($sp)
 	sw $s0, 4($sp)
 	sw $s1, 0($sp)
@@ -288,8 +295,8 @@ igl_start:
 	li $a2, 540 # y_loc of student object (grid cell with row index 18)
 	li $a3, 1 # object type
 	la $t0, student_locs
-	sw $a1, 0($t0) 
-	sw $a2, 4($t0) 	
+	sw $a1, 0($t0) #store student x_pos
+	sw $a2, 4($t0) #store student y_pos
 	syscall
 
 	# 2. create the specified number of score point objects
@@ -857,9 +864,9 @@ move_student_up:
 		la $s2, student_locs
 		lw $s0, 0($s2) # x_loc
 		lw $s1, 4($s2) # y_loc
-		sub $s1, $s1, $t3 # new y_loc
+		sub $s1, $s1, $t3 # new y_loc  = y_loc - student speed?
 
-		add $t9, $s1, $s4
+		add $t9, $s1, $s4 #t9 = new y_loc + student height
 		addi $t9, $t9, -1 # y-coordinate of student's bottom corners		
 		slt $t4, $t9, $zero # y-coordinate of upper-border is 0
 		beq $t4, $zero, msu_check_path 
@@ -975,7 +982,62 @@ move_student_left:
 
 # *****Task1: you need to complete this procedure move_student_left to perform its operations described in its comments above. 
 # *****Your codes start here
+		addi $sp, $sp, -24
+		sw $ra, 0($sp)
+		sw $s0, 4($sp)
+		sw $s1, 8($sp)
+		sw $s2, 12($sp)
+		sw $s3, 16($sp)
+		sw $s4, 20($sp)
 
+		la $t0, student_size
+		lw $s3, 0($t0) # student width	
+		lw $s4, 4($t0) # student height	
+		la $t0, maze_size
+		lw $t2, 0($t0) # maze width	
+
+		la $t0, student_speed
+		lw $t3, 0($t0) # student speed
+		la $s2, student_locs
+		lw $s0, 0($s2) # x_loc
+		lw $s1, 4($s2) # y_loc
+		sub $s0, $s0, $t3 # new x_loc
+
+		add $t9, $s1, $s3 #t9 =  new x loc + student width
+		addi $t9, $t9, -1 # x-coordinate of student's left corners		
+		slt $t4, $t9, $zero # x-coordinate of upper-border is 0
+		beq $t4, $zero, msl_check_path 
+		sub $s1, $t2, $s4
+		j msl_save_xloc
+
+msl_check_path:	beq $a0, $zero, msl_save_xloc
+		# check whether student's top-left corner is in a wall 
+		addi $a0, $s0, 0
+		addi $a1, $s1, 0
+		jal get_bitmap_cell
+		slt $v0, $zero, $v0 
+		bne $v0, $zero, msl_no_move   
+
+msl_save_xloc:	sw $s0, 0($s2) # save new x_loc
+		la $t0, student_id
+		lw $a0, 0($t0)
+		addi $a1, $s0, 0
+		addi $a2, $s1, 0
+		li $a3, 1 # object type
+		li $v0, 206
+		syscall # set new object location
+		li $v0, 1
+		j msl_exit
+	
+msl_no_move:	li $v0, 0		 
+msl_exit:	lw $ra, 0($sp)
+		lw $s0, 4($sp)
+		lw $s1, 8($sp)
+		lw $s2, 12($sp)
+		lw $s3, 16($sp)
+		lw $s4, 20($sp)
+		addi $sp, $sp, 24
+		jr $ra
 
 
 
@@ -1003,6 +1065,62 @@ move_student_right:
 
 # *****Task2: you need to complete this procedure move_student_right to perform its operations described in its comments above. 
 # *****Your codes start here
+		addi $sp, $sp, -24
+		sw $ra, 0($sp)
+		sw $s0, 4($sp)
+		sw $s1, 8($sp)
+		sw $s2, 12($sp)
+		sw $s3, 16($sp)
+		sw $s4, 20($sp)
+
+		la $t0, student_size
+		lw $s3, 0($t0) # student width	
+		lw $s4, 4($t0) # student height	
+		la $t0, maze_size
+		lw $t2, 0($t0) # maze width	
+
+		la $t0, student_speed
+		lw $t3, 0($t0) # student speed
+		la $s2, student_locs
+		lw $s0, 0($s2) # x_loc
+		lw $s1, 4($s2) # y_loc
+		add $s0, $s0, $t3 # new x_loc
+
+		add $t9, $s1, $s3 #t9 =  new x loc + student width
+		addi $t9, $t9, -1 # x-coordinate of student's left corners		
+		slt $t4, $t9, $zero # x-coordinate of upper-border is 0
+		beq $t4, $zero, msr_check_path 
+		sub $s1, $t2, $s4
+		j msr_save_xloc
+
+msr_check_path:	beq $a0, $zero, msr_save_xloc
+		# check whether student's bottom-right corner is in a wall 
+		add $a0, $s0, $s3
+		add $a1, $s1, 0
+		jal get_bitmap_cell
+		slt $v0, $zero, $v0 
+		bne $v0, $zero, msr_no_move   
+
+msr_save_xloc:	sw $s0, 0($s2) # save new x_loc
+		la $t0, student_id
+		lw $a0, 0($t0)
+		addi $a1, $s0, 0
+		addi $a2, $s1, 0
+		li $a3, 1 # object type
+		li $v0, 206
+		syscall # set new object location
+		li $v0, 1
+		j msr_exit
+	
+msr_no_move:	li $v0, 0		 
+msr_exit:	lw $ra, 0($sp)
+		lw $s0, 4($sp)
+		lw $s1, 8($sp)
+		lw $s2, 12($sp)
+		lw $s3, 16($sp)
+		lw $s4, 20($sp)
+		addi $sp, $sp, 24
+		jr $ra
 
 
 
@@ -1262,7 +1380,9 @@ csc_be:	beq $s0, $zero, csc_exit # whether num <= 0
 		
 
 
-
+#check collision
+#add SV to $a0
+#beq collision, true, j to add SV to game score
 
 
 
@@ -1469,38 +1589,47 @@ check_intersection:
 # Thirdly, set the value of $v0 based on the check result. Then: jr $ra 
 #*****Your codes start here
 
-	# condition1: whether A's left edge is to the right of B's right edge,
 
 
-
-
-
-
-	# condition2: whether A's right edge is to the left of B's left edge,
-
-
-
-
-
-
+	#sw $ra, 0($sp)
+	lw $s0, 4($sp) #x1
+	lw $s1, 8($sp) #y1
+	lw $s2, 12($sp) #x2
+	lw $s3, 16($sp) #y2
+	lw $s4, 20($sp) #x3
+	lw $s5, 24($sp) #y3
+	lw $s6, 28($sp) #x4
+	lw $s7, 32($sp) #y4
 	
-	# condition3: whether A's top edge is below B's bottom edge,
+	# condition1: whether A's left edge is to the left of B's right edge,
+	slt $t0, $s4, $s0 # $t0=1 if  Aleft is inside B's right edge
+	beq $t0, $zero, intersection_occured
 
 
+	# condition2: whether A's right edge is to the right of B's left edge,
+	slt $t1, $s3, $s6 #if $s3 is not less than $s6 $t1=0 aka they intersect
+	beq $t1, $zero, intersection_occured
+	
+	
+	# condition3: whether A's top edge is above B's bottom edge,
+	slt $t2, $s1, $s7 
+	beq $t2, $zero, intersection_occured
 
 
+	# conditon4: whether A's bottom edge is below B's top edge,
+	slt $t3, $s3, $s5
+	beq $t3, $zero, intersection_occured
+	
+	
+	#We got this far so we know there wasn't an intersection
+	addi $v0, $zero, 0 #no intersection occured
+	
+exit_intersection:
+	jr $ra
 
-
-
-	# conditon4: whether A's bottom edge is above B's top edge,
-
-
-
-
-
-
-
-
+intersection_occured:
+addi $v0, $zero, 1 #intersection occured
+j exit_intersection
 
 #*****Your codes end here
 
