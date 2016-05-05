@@ -1360,14 +1360,23 @@ csc_be:	beq $s0, $zero, csc_exit # whether num <= 0
 		
 
 
-#check collision
-#add SV to $a0
-#beq collision, true, j to add SV to game score
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+li $v0, 1
 	
 # *****Your codes end here
 
@@ -1377,7 +1386,7 @@ csc_be:	beq $s0, $zero, csc_exit # whether num <= 0
 	li $a1, -9999
 	sw $a1, 0($s2) # x_loc
 	lw $a2, 4($s2) # y_loc 
-	li $v0, 206 
+	li $v0, 206
 	addi $a0, $s1, 0 # the id of object
 	li $a3, 0 # object type
 	syscall # set object location
@@ -1396,14 +1405,18 @@ csc_be:	beq $s0, $zero, csc_exit # whether num <= 0
 
 # *****Task5.2: you need to increase the game score by the SV of the score point object in collision with the student.
 # *****Your codes start here
+	#get the score of the object we hit
+	#la $t3, scorepoint_sv
+	#lw $t2, $t1($t3) #gets the score
 
+	la $t1, game_score
+	lw $t0, 0($t1) #get the game score
+	addi $t0, $t0, 20 #$t2 #increment the score, change 20 to whatever the value holding the score is
+	sw $t0, 0($t1) #store the score
 
-
-
-
-#syscall
-
-
+	addi $a0, $t0, 0
+	li $v0, 203
+	syscall
 
 
 # *****Your codes end here
@@ -1495,7 +1508,11 @@ ctc_be:	beq $s0, $zero, ctc_no_collision # whether num <= 0
 #	| RectB.botrigh_x |
 #	| RectB.botrigh_y | <-- $sp 
 # *****Your codes start here
-	
+	#preserve registers
+	# addi $sp, $sp, -8
+	# sw $s3, 0($sp)
+	# sw $s4, 4($sp)
+
 	la $t4, student_size
 	lw $s3, 0($t4) # student width	
 	lw $s4, 4($t4) # student height	
@@ -1538,16 +1555,22 @@ ctc_be:	beq $s0, $zero, ctc_no_collision # whether num <= 0
 	jal check_intersection
 	
 	addi $sp, $sp, 32 #delete off the stack
-	
-	
-	
-	
-	
+
+	#return registers to previous state
+	# lw $s3 0($sp)
+	# lw $s4 4($sp)
+
+
+
+
+
+
+
 	
 	
 # *****Your codes end here
 
-        # After calling procedure: check_intersection, $v0=0 if the student missed the teacher object
+    # After calling procedure: check_intersection, $v0=0 if the student missed the teacher object
 	beq $v0, $zero, ctc_next 
 	li $v0, 1 
 	j ctc_exit # skip collision checking for other objects
@@ -1616,35 +1639,74 @@ check_intersection:
 	lw $s6, 24($sp) #x4
 	lw $s7, 28($sp) #y4
 	
-	# condition1: whether A's left edge is to the left of B's right edge,
-	slt $t0, $s4, $s0 # $t0=1 if  Aleft is inside B's right edge
-	beq $t0, $zero, intersection_occured
+	addi $t0, $zero, 1 #counter
+# 	#off by maybe the width of the character?
+# 	# condition1: whether A's top left edge is to the left of B's top right edge,
+# 	slt $t0, $s6, $s0 # $t0=1 if  Aleft is inside B's right edge
+# 	#beq $s4, $s0, some_lbl
+# 	#t0 = 1 if they don't intersect
+# 	#now check if the y's are equal
+# 	#then if both t0=0 and y's are equal, an intersection occurred
+
+# 	#slt $t4, $s1, $s7
+# 	beq $s1, $s5, some_lbl  #y2 = y4
+# 	j condition2
+
+# some_lbl:
+# 	beq $t0, $zero, intersection_occured
 
 
-	# condition2: whether A's right edge is to the right of B's left edge,
-	slt $t1, $s3, $s6 #if $s3 is not less than $s6 $t1=0 aka they intersect
-	beq $t1, $zero, intersection_occured
+# 	# condition2: whether A's right edge is to the right of B's left edge,
+condition2:
+# 	slt $t1, $s3, $s6 #if $s3 is not less than $s6 $t1=0 aka they intersect
+# 	beq $t1, $zero, intersection_occured
 	
-	
-	# condition3: whether A's top edge is above B's bottom edge,
-	slt $t2, $s1, $s7 
-	beq $t2, $zero, intersection_occured
+# 	#This works
+# 	# condition3: whether A's top edge is above B's bottom edge,
+	bne $s0, $s4, condition3 #if x1!=x3, they don't intersect
 
-
-	# conditon4: whether A's bottom edge is below B's top edge,
-	slt $t3, $s3, $s5
-	beq $t3, $zero, intersection_occured
+	slt $t2, $s1, $s7
+	beq $t2, $t0, intersection_occured
+	
+	# slt $t5, $s7, $s1
+	# beq $t5, $zero, intersection_occured 
+condition3:
+# 	# conditon4: whether A's bottom edge is below B's top edge,
+# 	slt $t3, $s3, $s5
+# 	beq $t3, $zero, intersection_occured
 	
 	
-	#We got this far so we know there wasn't an intersection
-	addi $v0, $zero, 0 #no intersection occured
+# 	#We got this far so we know there wasn't an intersection
+# 	addi $v0, $zero, 0 #no intersection occured
+	li $v0, 0
 	
 exit_intersection:
 	jr $ra
 
 intersection_occured:
-addi $v0, $zero, 1 #intersection occured
-j exit_intersection
+	li $v0, 1 #intersection occured
+	j exit_intersection
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #*****Your codes end here
 
