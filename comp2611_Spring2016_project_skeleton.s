@@ -1001,13 +1001,13 @@ move_student_left:
 		la $s2, student_locs
 		lw $s0, 0($s2) # x_loc
 		lw $s1, 4($s2) # y_loc
-		sub $s0, $s0, $t3 # new x_loc
+		sub $s0, $s0, $t3 # new x_loc = curr_x_loc - student speed
 
-		add $t9, $s1, $s3 #t9 =  new x loc + student width
+		add $t9, $s0, $s3 #t9 =  new x loc + student width
 		addi $t9, $t9, -1 # x-coordinate of student's left corners		
 		slt $t4, $t9, $zero # x-coordinate of upper-border is 0
 		beq $t4, $zero, msl_check_path 
-		sub $s1, $t2, $s4
+		sub $s0, $t2, $s3 #s1 = maze width - student width
 		j msl_save_xloc
 
 msl_check_path:	beq $a0, $zero, msl_save_xloc
@@ -1038,16 +1038,6 @@ msl_exit:	lw $ra, 0($sp)
 		lw $s4, 20($sp)
 		addi $sp, $sp, 24
 		jr $ra
-
-
-
-
-
-
-
-
-
-
 
 
 # *****Your codes end here
@@ -1086,11 +1076,15 @@ move_student_right:
 		lw $s1, 4($s2) # y_loc
 		add $s0, $s0, $t3 # new x_loc
 
-		add $t9, $s1, $s3 #t9 =  new x loc + student width
-		addi $t9, $t9, -1 # x-coordinate of student's left corners		
-		slt $t4, $t9, $zero # x-coordinate of upper-border is 0
+
+		#add $t9, $s1, $s3 #t9 =  new x loc + student width
+		#addi $t9, $t9, -1 # x-coordinate of student's left corners		
+		#slt $t4, $t9, $zero # x-coordinate of upper-border is 0
+
+		addi $t2, $t2, -1 # x-coordinate of lower-border is (height - 1)
+		slt $t4, $t2, $s0 #if t2 > s1, check the path 
 		beq $t4, $zero, msr_check_path 
-		sub $s1, $t2, $s4
+		li $s0, 0 #else s1 = 0, aka move the characters x to the top of the board
 		j msr_save_xloc
 
 msr_check_path:	beq $a0, $zero, msr_save_xloc
@@ -1121,20 +1115,6 @@ msr_exit:	lw $ra, 0($sp)
 		lw $s4, 20($sp)
 		addi $sp, $sp, 24
 		jr $ra
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # *****Your codes end here
@@ -1421,7 +1401,7 @@ csc_be:	beq $s0, $zero, csc_exit # whether num <= 0
 
 
 
-
+#syscall
 
 
 
@@ -1515,19 +1495,55 @@ ctc_be:	beq $s0, $zero, ctc_no_collision # whether num <= 0
 #	| RectB.botrigh_x |
 #	| RectB.botrigh_y | <-- $sp 
 # *****Your codes start here
+	
+	la $t4, student_size
+	lw $s3, 0($t4) # student width	
+	lw $s4, 4($t4) # student height	
+	#la $t4, maze_size
+	#lw $t2, 0($t0) # maze width	
+
+	add $t2, $s3, $t0 #student width + x1
+	addi $t2, $t2 , -1 #x2
 		
-
-
-
-
-
-
-
-
-
-
-
-
+	add $t3, $s3, $t1 #student height + y1
+	addi $t3, $t3, -1 #y2
+	
+	la $t4, teacher_size
+	lw $s3, 0($t4) #teacher width
+	lw $s4, 4($t4) #teacher height
+	
+	
+	add $t4, $v0, $s3 #teacher width + x1
+	addi $t4, $t4 , -1 #x2
+		
+	add $t5, $v1, $s3 #teacher height + y1
+	addi $t5, $t5, -1 #y2
+	
+	#allocate stack
+	#push all coordinates on stack
+	addi $sp, $sp, -32
+	
+	sw $t0, 0($sp) #x1
+	sw $t1, 4($sp) #y1
+	
+	sw $t2, 8($sp) #x2
+	sw $t3, 12($sp) #y2
+	
+	sw $v0, 16($sp) #x3
+	sw $v1, 20($sp) #y3
+	
+	sw $t4, 24($sp) #x4
+	sw $t5, 28($sp) #y4
+	
+	jal check_intersection
+	
+	addi $sp, $sp, 32 #delete off the stack
+	
+	
+	
+	
+	
+	
 	
 # *****Your codes end here
 
@@ -1589,17 +1605,16 @@ check_intersection:
 # Thirdly, set the value of $v0 based on the check result. Then: jr $ra 
 #*****Your codes start here
 
-
-
+	
 	#sw $ra, 0($sp)
-	lw $s0, 4($sp) #x1
-	lw $s1, 8($sp) #y1
-	lw $s2, 12($sp) #x2
-	lw $s3, 16($sp) #y2
-	lw $s4, 20($sp) #x3
-	lw $s5, 24($sp) #y3
-	lw $s6, 28($sp) #x4
-	lw $s7, 32($sp) #y4
+	lw $s0, 0($sp) #x1
+	lw $s1, 4($sp) #y1
+	lw $s2, 8($sp) #x2
+	lw $s3, 12($sp) #y2
+	lw $s4, 16($sp) #x3
+	lw $s5, 20($sp) #y3
+	lw $s6, 24($sp) #x4
+	lw $s7, 28($sp) #y4
 	
 	# condition1: whether A's left edge is to the left of B's right edge,
 	slt $t0, $s4, $s0 # $t0=1 if  Aleft is inside B's right edge
