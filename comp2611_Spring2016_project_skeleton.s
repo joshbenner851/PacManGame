@@ -1357,7 +1357,61 @@ csc_be:	beq $s0, $zero, csc_exit # whether num <= 0
 #	| RectB.botrigh_x |
 #	| RectB.botrigh_y | <-- $sp 
 # *****Your codes start here
+	#preserve registers
+	# addi $sp, $sp, -8
+	# sw $s0, 0($sp)
+	# sw $s1, 4($sp)
+
+	# la $t4, student_size
+	# lw $s0, 0($t4) # student width	
+	# # lw $s1, 4($t4) # student height	
+	# #la $t4, maze_size
+	# #lw $t2, 0($t0) # maze width	
+
+	# add $t2, $s0, $t0 #student width + x1
+	# addi $t2, $t2 , -1 #x2
 		
+	# add $t3, $s0, $t1 #student height + y1
+	# addi $t3, $t3, -1 #y2
+	
+	# la $t4, scorepoint_size
+	# lw $s0, 0($t4) #scorept width
+	# lw $s1, 4($t4) #scorept height
+	
+	
+	# add $t4, $t6, $s0 #scorept width + x1
+	# addi $t4, $t4 , -1 #x2
+		
+	# add $t5, $t7, $s0 #scorept height + y1
+	# addi $t5, $t5, -1 #y2
+	
+	# #allocate stack
+	# #push all coordinates on stack
+	# addi $sp, $sp, -32
+	
+	# sw $t0, 0($sp) #x1
+	# sw $t1, 4($sp) #y1
+	
+	# sw $t2, 8($sp) #x2
+	# sw $t3, 12($sp) #y2
+	
+	# sw $t6, 16($sp) #x3
+	# sw $t7, 20($sp) #y3
+	
+	# sw $t4, 24($sp) #x4
+	# sw $t5, 28($sp) #y4
+	
+	# jal check_intersection
+	
+	# addi $sp, $sp, 32 #delete off the stack
+
+	# # #return registers
+	# lw $s0, 0($sp)
+	# lw $s1, 4($sp)
+
+	# addi $sp, $sp, 8
+
+	li $v0, 0
 
 
 
@@ -1365,18 +1419,6 @@ csc_be:	beq $s0, $zero, csc_exit # whether num <= 0
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-li $v0, 1
 	
 # *****Your codes end here
 
@@ -1409,14 +1451,14 @@ li $v0, 1
 	#la $t3, scorepoint_sv
 	#lw $t2, $t1($t3) #gets the score
 
-	la $t1, game_score
-	lw $t0, 0($t1) #get the game score
-	addi $t0, $t0, 20 #$t2 #increment the score, change 20 to whatever the value holding the score is
-	sw $t0, 0($t1) #store the score
+	# la $t1, game_score
+	# lw $t0, 0($t1) #get the game score
+	# addi $t0, $t0, 20 #$t2 #increment the score, change 20 to whatever the value holding the score is
+	# sw $t0, 0($t1) #store the score
 
-	addi $a0, $t0, 0
-	li $v0, 203
-	syscall
+	# addi $a0, $t0, 0
+	# li $v0, 203
+	# syscall
 
 
 # *****Your codes end here
@@ -1514,32 +1556,46 @@ ctc_be:	beq $s0, $zero, ctc_no_collision # whether num <= 0
 	# sw $s4, 4($sp)
 
 	la $t4, student_size
-	lw $s3, 0($t4) # student width	
-	lw $s4, 4($t4) # student height	
+	lw $t6, 0($t4) # student width	
+	lw $t7, 4($t4) # student height	
 	#la $t4, maze_size
 	#lw $t2, 0($t0) # maze width	
 
-	add $t2, $s3, $t0 #student width + x1
+	add $t2, $t6, $t0 #student width + x1
 	addi $t2, $t2 , -1 #x2
 		
-	add $t3, $s3, $t1 #student height + y1
+	add $t3, $t6, $t1 #student height + y1
 	addi $t3, $t3, -1 #y2
 	
 	la $t4, teacher_size
-	lw $s3, 0($t4) #teacher width
-	lw $s4, 4($t4) #teacher height
+	lw $t6, 0($t4) #teacher width
+	lw $t7, 4($t4) #teacher height
 	
 	
-	add $t4, $v0, $s3 #teacher width + x1
+	add $t4, $v0, $t6 #teacher width + x1
 	addi $t4, $t4 , -1 #x2
 		
-	add $t5, $v1, $s3 #teacher height + y1
+	add $t5, $v1, $t6 #teacher height + y1
 	addi $t5, $t5, -1 #y2
 	
 	#allocate stack
 	#push all coordinates on stack
 	addi $sp, $sp, -32
 	
+	#preserve the stack
+	sw $s0, 0($sp) #x1
+	sw $s1, 4($sp) #y1
+	sw $s2, 8($sp) #x2
+	sw $s3, 12($sp) #y2
+	sw $s4, 16($sp) #x3
+	sw $s5, 20($sp) #y3
+	sw $s6, 24($sp) #x4
+	sw $s7, 28($sp) #y4
+
+	#push all coordinates on stack
+	addi $sp, $sp, -32
+
+	#push our coords on the stack
 	sw $t0, 0($sp) #x1
 	sw $t1, 4($sp) #y1
 	
@@ -1551,10 +1607,22 @@ ctc_be:	beq $s0, $zero, ctc_no_collision # whether num <= 0
 	
 	sw $t4, 24($sp) #x4
 	sw $t5, 28($sp) #y4
-	
+	# sw $ra, 32($sp)
 	jal check_intersection
 	
-	addi $sp, $sp, 32 #delete off the stack
+	addi $sp, $sp, 32
+
+	#load back the stack
+	lw $s0, 0($sp) #x1
+	lw $s1, 4($sp) #y1
+	lw $s2, 8($sp) #x2
+	lw $s3, 12($sp) #y2
+	lw $s4, 16($sp) #x3
+	lw $s5, 20($sp) #y3
+	lw $s6, 24($sp) #x4
+	lw $s7, 28($sp) #y4
+	
+	addi $sp, $sp, 32
 
 	#return registers to previous state
 	# lw $s3 0($sp)
@@ -1638,6 +1706,8 @@ check_intersection:
 	lw $s5, 20($sp) #y3
 	lw $s6, 24($sp) #x4
 	lw $s7, 28($sp) #y4
+	#lw $ra, 32($sp)
+	
 	
 	addi $t0, $zero, 1 #counter
 # 	#off by maybe the width of the character?
@@ -1647,49 +1717,75 @@ check_intersection:
 # 	#t0 = 1 if they don't intersect
 # 	#now check if the y's are equal
 # 	#then if both t0=0 and y's are equal, an intersection occurred
+	slt $t4, $s0, $s6 #is Students left corner less than Teachers right
+	beq $t0, $t4, some_lbl
+	
+	j condition2
 
-# 	#slt $t4, $s1, $s7
-# 	beq $s1, $s5, some_lbl  #y2 = y4
-# 	j condition2
-
-# some_lbl:
-# 	beq $t0, $zero, intersection_occured
+some_lbl:
+	beq $s1, $s5, intersection_occured   #y1 = y3
 
 
-# 	# condition2: whether A's right edge is to the right of B's left edge,
+	# condition2: whether A's right edge is to the right of B's left edge,
 condition2:
-# 	slt $t1, $s3, $s6 #if $s3 is not less than $s6 $t1=0 aka they intersect
-# 	beq $t1, $zero, intersection_occured
+# # # 	slt $t1, $s3, $s6 #if $s3 is not less than $s6 $t1=0 aka they intersect
+# # # 	beq $t1, $zero, intersection_occured
 	
-# 	#This works
-# 	# condition3: whether A's top edge is above B's bottom edge,
-	bne $s0, $s4, condition3 #if x1!=x3, they don't intersect
+# # # 	#This works
+# # # 	# condition3: whether A's top edge is above B's bottom edge,
+# # 	bne $s0, $s4, condition3 #if x1!=x3, they don't intersect
 
-	slt $t2, $s1, $s7
-	beq $t2, $t0, intersection_occured
+# # 	slt $t2, $s1, $s7
+# # 	beq $t2, $t0, intersection_occured
 	
-	# slt $t5, $s7, $s1
-	# beq $t5, $zero, intersection_occured 
-condition3:
-# 	# conditon4: whether A's bottom edge is below B's top edge,
-# 	slt $t3, $s3, $s5
-# 	beq $t3, $zero, intersection_occured
+# # 	# slt $t5, $s7, $s1
+# # 	# beq $t5, $zero, intersection_occured 
+# # condition3:
+# # # 	# conditon4: whether A's bottom edge is below B's top edge,
+# # # 	slt $t3, $s3, $s5
+# # # 	beq $t3, $zero, intersection_occured
 	
 	
-# 	#We got this far so we know there wasn't an intersection
-# 	addi $v0, $zero, 0 #no intersection occured
+# # # 	#We got this far so we know there wasn't an intersection
+# # # 	addi $v0, $zero, 0 #no intersection occured
 	li $v0, 0
-	
-exit_intersection:
 	jr $ra
+# exit_intersection:
+	# jr $ra
 
 intersection_occured:
 	li $v0, 1 #intersection occured
-	j exit_intersection
+	jr $ra
+
+
+
+# condition1: whether A's left edge is to the right of B's right edge,
+	
 
 
 
 
+
+# condition2: whether A's right edge is to the left of B's left edge,
+
+
+
+
+
+
+
+# condition3: whether A's top edge is below B's bottom edge,
+
+
+
+
+
+
+
+# conditon4: whether A's bottom edge is above B's top edge,
+	# li $v0, 1	
+	# li $v0, 0
+	# jr $ra
 
 
 
