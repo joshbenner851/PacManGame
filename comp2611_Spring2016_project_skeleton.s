@@ -1411,7 +1411,7 @@ csc_be:	beq $s0, $zero, csc_exit # whether num <= 0
 
 	# addi $sp, $sp, 8
 
-	li $v0, 0
+	#li $v0, 0
 
 
 
@@ -1718,36 +1718,46 @@ check_intersection:
 # 	#now check if the y's are equal
 # 	#then if both t0=0 and y's are equal, an intersection occurred
 	slt $t4, $s0, $s6 #is Students left corner less than Teachers right
-	beq $t0, $t4, some_lbl
-	
+	beq $t0, $t4, check_right
 	j condition2
 
-some_lbl:
-	beq $s1, $s5, intersection_occured   #y1 = y3
+check_right:
+	
+	#their right is less than mine
+	slt $t4, $s6, $s2
+	beq $t0, $t4, check_y #incorrect so go to condition 2
+	j condition2 #else check the y's
 
 
 	# condition2: whether A's right edge is to the right of B's left edge,
 condition2:
 # # # 	slt $t1, $s3, $s6 #if $s3 is not less than $s6 $t1=0 aka they intersect
 # # # 	beq $t1, $zero, intersection_occured
-	
-# # # 	#This works
-# # # 	# condition3: whether A's top edge is above B's bottom edge,
-# # 	bne $s0, $s4, condition3 #if x1!=x3, they don't intersect
+	#check that their left is less than our right
+	slt $t4, $s4, $s2
+	beq $t0, $t4, check_left
+	j condition3
 
-# # 	slt $t2, $s1, $s7
-# # 	beq $t2, $t0, intersection_occured
-	
-# # 	# slt $t5, $s7, $s1
-# # 	# beq $t5, $zero, intersection_occured 
-# # condition3:
-# # # 	# conditon4: whether A's bottom edge is below B's top edge,
-# # # 	slt $t3, $s3, $s5
-# # # 	beq $t3, $zero, intersection_occured
-	
-	
-# # # 	#We got this far so we know there wasn't an intersection
-# # # 	addi $v0, $zero, 0 #no intersection occured
+check_left:
+	# check that our left is less than their left
+	slt $t4, $s0, $s4
+	beq $t0, $t4, check_y
+	j condition3
+
+condition3:
+
+	#check that their top is less than our bottom
+	slt $t4, $s5, $s3
+	beq $t0, $t4, check_top
+	j condition4
+
+condition4:
+	#check that my top is less than their bottom
+	slt $t4, $s1, $s7
+	beq $t0, $t4, check_bottom
+	j exit
+
+exit:
 	li $v0, 0
 	jr $ra
 # exit_intersection:
@@ -1757,49 +1767,27 @@ intersection_occured:
 	li $v0, 1 #intersection occured
 	jr $ra
 
+## Make sure the x's and y's match up
+check_y:
+	beq $s1, $s5, intersection_occured   #y1 = y3
+	j exit
 
+check_x:
+	beq $s0, $s4, intersection_occured
+	j exit
 
-# condition1: whether A's left edge is to the right of B's right edge,
-	
+#checking that we're not accidentally calling hit on a thing above/below when wrong
+check_top:
+	#check that our top is less than their top
+	slt $t4, $s1, $s5
+	beq $t0, $t4, check_x
+	j condition4
 
-
-
-
-
-# condition2: whether A's right edge is to the left of B's left edge,
-
-
-
-
-
-
-
-# condition3: whether A's top edge is below B's bottom edge,
-
-
-
-
-
-
-
-# conditon4: whether A's bottom edge is above B's top edge,
-	# li $v0, 1	
-	# li $v0, 0
-	# jr $ra
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+check_bottom:
+	#check that their top is less than mine
+	slt $t4, $s5, $s1
+	beq $t0, $t4, check_x
+	j exit
 
 
 
